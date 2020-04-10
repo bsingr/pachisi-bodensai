@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pachisi Bodensai</title>
+
+    <script>
+      if (location.hostname === 'localhost') {
+        document.write('<script src="http://localhost:35729/livereload.js?snipver=1"></' + 'script>')
+      }
+    </script> 
+
+    <!-- update the version number as needed -->
+    <!-- <script defer src="/__/firebase/7.12.0/firebase-app.js"></script> -->
+    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <!-- <script defer src="/__/firebase/7.12.0/firebase-auth.js"></script> -->
+    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-auth.js"></script>
+    <!-- <script defer src="/__/firebase/7.12.0/firebase-firestore.js"></script> -->
+    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-database.js"></script>
+    <!-- <script defer src="/__/firebase/7.12.0/firebase-messaging.js"></script> -->
+    <!-- <script defer src="/__/firebase/7.12.0/firebase-storage.js"></script> -->
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script defer src="/__/firebase/init.js"></script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+    <script defer src="./vendor/jquery-ui.min.js"></script>
+    <script src="./vendor/utils.js"></script>
+    <script src="./game.js"></script>
+
+    <link rel="stylesheet" href="./vendor/jquery-ui.min.css">
+
+    <style media="screen">
+      body { background: #fff; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+      .inline-template { display: none; }
+      
+      #game {
+        background: rgb(243, 240, 236);
+        left: 50%;
+        margin-left: -500px;
+        position: absolute;
+        width: 1000px;
+        height: 800px;
+      }
+
+      #game nav {
+        background: rgb(223, 216, 207);
+        height: 20px;
+        padding: 10px;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+      }
+      .nav-game {
+      }
+      .nav-ingame {
+      }
+      .nav-players {
+        font-size: 12px;
+      }
+
+      #help {
+
+      }
+      #help.active {
+        background: blue;
+        color: white;
+      }
+      #modal-help {
+        background: #999;
+        width: 100%;
+        height: 100%;
+        display: none;
+        position: absolute;
+      }
+      #modal-help img {
+        position: absolute;
+        top: 30px;
+        left: 5px;
+      }
+
+      #desk {
+        position: absolute;
+        top: 50px;
+        left: 50%;
+        margin-left: -450px;
+        width: 900px;
+        height: 800px;
+      }
+
+      #board {
+        background-image: url(./board.jpg);
+        position: absolute;
+        top: 100px;
+        left: 50%;
+        margin-left: -307px;
+        width: 614px;
+        height: 614px;
+      }
+
+      .marble {
+        height: 20px;
+        width: 20px;
+        box-shadow: -1px -1px 2px #fff, -1px -1px 1px #ccc, 1px 1px 1px #999, 1px 1px 2px #666;
+        -webkit-background-clip: padding-box; /* for Safari */
+        background-clip: padding-box; /* for IE9+, Firefox 4+, Opera, Chrome */
+        border-radius: 50%;
+        display: inline-block;
+        position: absolute;
+      }
+
+      .marble--player0 {
+        background-color: rgba(250, 90, 40, 0.85);
+      }
+      .marble--player1 {
+        background-color: rgba(70, 220, 70, 0.85);
+      }
+      .marble--player2 {
+        background-color: rgba(40, 200, 250, 0.85);
+      }
+      .marble--player3 {
+        background-color: rgba(190, 80, 220, 0.85);
+      }
+
+      .player-cursor {
+        position: absolute;
+        display: inline-block;
+        margin-top: 8px;
+        margin-left: 8px;
+        z-index: 100000;
+
+        /* triangle */
+
+        border-left: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+      }
+      #player-cursor0 {
+        border-left-color: rgba(250, 90, 40, 0.7);
+      }
+      #player-cursor1 {
+        border-left-color: rgba(70, 220, 70, 0.7);
+      }
+      #player-cursor2 {
+        border-left-color: rgba(40, 200, 250, 0.7);
+      }
+      #player-cursor3 {
+        border-left-color: rgba(190, 80, 220, 0.7);
+      }
+
+      #dealer-zone {
+        position: absolute;
+        display: inline-block;
+        margin-left: -35px;
+        left: 50%;
+        height: 96px;
+        width: 70px;
+        background-color: #eee;
+      }
+
+      .player-zone {
+        position: absolute;
+        display: inline-block;
+        height: 300px;
+        width: 130px;
+        border-radius: 10px;
+      }
+      #player-zone0 {
+        background-color: rgba(250, 90, 40, 0.5);
+        top: 100px;
+        left: 0px;
+      }
+      #player-zone1 {
+        background-color: rgba(70, 220, 70, 0.5);
+        top: 100px;
+        left: 770px;
+      }
+      #player-zone2 {
+        background-color: rgba(40, 200, 250, 0.5);
+        top: 415px;
+        left: 0px;
+      }
+      #player-zone3 {
+        background-color: rgba(190, 80, 220, 0.5);
+        top: 415px;
+        left: 770px;
+      }
+
+      .choose-player {
+        border: 4px solid transparent;
+      }
+      .choose-player--active {
+        border-bottom: 4px solid black;
+      }
+      .choose-player--local-active {
+        border-bottom: 4px solid red;
+      }
+      #choose-player0 {
+        background-color: rgba(250, 90, 40, 0.5);
+      }
+      #choose-player1 {
+        background-color: rgba(70, 220, 70, 0.5);
+      }
+      #choose-player2 {
+        background-color: rgba(40, 200, 250, 0.5);
+      }
+      #choose-player3 {
+        background-color: rgba(190, 80, 220, 0.5);
+      }
+
+      .card {
+        width: 55px;
+        height: 85px;
+        display: inline-block;
+        position: absolute;
+        z-index: 0;
+      }
+      .card-box {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        transition: transform 0.8s;
+        transform-style: preserve-3d;
+
+        /* this is for the rotation: transform:rotateY(0deg) or transform:rotateY(180deg) */
+        transform:rotateY(180deg);
+      }
+      .card-front,
+      .card-back {
+        box-shadow: 0 1px 1px #666;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        -webkit-backface-visibility: hidden; /* Safari */
+        backface-visibility: hidden;
+      }
+      .card-front {
+        background-image: url('./cards.jpg');
+      }
+      .card-back {  
+        background-image: linear-gradient(to bottom right, #eee, #bbb);
+        transform: rotateY(180deg);
+      }
+      /* +15 +30 */
+      .card--type-1 .card-front { background-position: -3px 3px; }
+      .card--type-2 .card-front { background-position: -59px 3px; }
+      .card--type-3 .card-front { background-position: -110px 3px; }
+      .card--type-4 .card-front { background-position: -165px 3px; }
+      .card--type-5 .card-front { background-position: -215px 3px; }
+      .card--type-6 .card-front { background-position: -270px 3px; }
+      .card--type-7 .card-front { background-position: -321px 3px; }
+      .card--type-8 .card-front { background-position: -376px 3px; }
+      .card--type-9 .card-front { background-position: -431px 3px; }
+      .card--type-10 .card-front { background-position: -485px 3px; }
+      .card--type-12 .card-front { background-position: -543px 3px; }
+      .card--type-13 .card-front { background-position: -595px 3px; }
+      .card--type-switch .card-front { background-position: -647px 3px; }
+      .card--type-lightningball .card-front { background-position: -710px 3px; }
+      .card--type-ringaround .card-front { background-position: -765px 3px; }
+      .card--type-badcop .card-front { background-position: -820px 3px; }
+      .card--type-goodcop .card-front { background-position: -870px 3px; }
+      .card--type-alternate .card-front { background-position: -925px 3px; }
+    </style>
+  </head>
+  <body>
+    <div id="game" style="display: none;">
+      <nav>
+        <div class="nav-game">
+          <button id="new-game">Start New Game</button>
+          <button id="help">?</button>
+        </div>
+        <div class="nav-ingame">
+          <button id="game-shuffle-cards">Shuffle Cards</button>
+          <button id="game-deal-cards">Deal Cards</button>
+        </div>
+        <div class="nav-players">
+          Choose Player: 
+          <button id="choose-player0" class="choose-player">Player 0</button>
+          <button id="choose-player1" class="choose-player">Player 1</button>
+          <button id="choose-player2" class="choose-player">Player 2</button>
+          <button id="choose-player3" class="choose-player">Player 3</button>
+        </div>
+      </nav>
+      <div id="desk">
+        <div id="board">
+          <marbles></marbles>
+          <marble-template class="inline-template">
+            <div id="marble{{id}}" class="marble marble--player{{playerId}}"></div>
+          </marble-template>
+        </div>
+        <div id="dealer-zone"></div>
+        <div id="player-zone0" class="player-zone"></div>
+        <div id="player-zone1" class="player-zone"></div>
+        <div id="player-zone2" class="player-zone"></div>
+        <div id="player-zone3" class="player-zone"></div>
+        <cards></cards>
+        <card-template class="inline-template">
+          <div id="card{{id}}" class="card">
+            <div class="card-box">
+              <div class="card-front"></div>
+              <div class="card-back"></div>
+            </div>
+          </div>  
+        </card-template>
+      </div>
+      <div id="player-cursor0" class="player-cursor"></div>
+      <div id="player-cursor1" class="player-cursor"></div>
+      <div id="player-cursor2" class="player-cursor"></div>
+      <div id="player-cursor3" class="player-cursor"></div>
+
+      <div id="modal-wall"></div>
+      <div id="modal-help">
+        <img src="./cards.jpg">
+      </div>
+    </div>
+
+    <script>
+      const NO_PLAYER_ID = -1;
+      const NO_PLAYER_ACTIVE_LOCK = -1;
+
+      class GameDesk {
+        constructor() {
+          $('#game').fadeIn()
+          this.boardCenter = new Rect({
+            left: 383,
+            right: 463,
+            top: 332,
+            bottom: 395,
+          })
+          const dealerZone = {}
+          dealerZone.top = $('#dealer-zone').offset().top - $('#desk').offset().top
+          dealerZone.left = $('#dealer-zone').offset().left - $('#desk').offset().left
+          dealerZone.right = dealerZone.left + $('#dealer-zone').width()
+          dealerZone.bottom = dealerZone.top + $('#dealer-zone').height()
+          this.dealerZone = new Rect(dealerZone)
+        }
+
+        renderPlayer(player, currentPlayerId) {
+          const isPlayerActive = player.activeLock !== NO_PLAYER_ACTIVE_LOCK;
+          const $choosePlayer = $('#choose-player' + player.id)
+          if (isPlayerActive) {
+            $choosePlayer.addClass('choose-player--active');
+          } else {
+            $choosePlayer.removeClass('choose-player--active');
+          }
+          if (isPlayerActive && player.id === currentPlayerId) {
+            $choosePlayer.addClass('choose-player--local-active');
+          } else {
+            $choosePlayer.removeClass('choose-player--local-active');
+          }
+          $('#player-cursor' + player.id).animate({
+            top: player.top,
+            left: player.left
+          })
+        }
+        
+        renderPlayers(players, currentPlayerId) {
+          players.forEach((player) => {
+            this.renderPlayer(player, currentPlayerId)
+          })
+        }
+
+        renderMarbles(marbles) {
+          marbles.forEach((marble) => {
+            this.renderMarble(marble, true)
+          })
+        }
+
+        renderMarble(marble, animate=false) {
+          $("#marble" + marble.id)
+            .animate({
+              top: marble.top + 'px',
+              left: marble.left + 'px'
+            }, animate ? 400 : 0)
+        }
+
+        renderCards(cards, currentPlayerId) {
+          cards.forEach((card) => {
+            this.renderCard(card, currentPlayerId, true)
+          })
+        }
+
+        renderCard(card, currentPlayerId, animate=false) {
+          const cardId = card.id;
+          const $card = $("#card" + cardId);
+          let oldTypeClass = ''
+          const oldTypeMatch = $card.attr('class').match(/card--type-\w+/)
+          if (oldTypeMatch && oldTypeMatch.length > 0) {
+            oldTypeClass = oldTypeMatch[0]
+          }
+          $card
+            .removeClass(oldTypeClass)
+            .addClass('card--type-' + card.type)
+            .animate({
+              top: card.top + 'px',
+              left: card.left + 'px'
+            }, animate ? 400 : 0)
+          
+          // only change visibility for cards that stopped moving
+          // to avoid accidentially showing a card while moving over board center
+          if (!card.isMoving) {
+            $card.find('.card-box').css({
+              transform: this.isCardVisible(currentPlayerId, {
+                ...card,
+                right: card.left + $card.width(),
+                bottom: card.top + $card.height(),
+              }) ? 'rotateY(0deg)' : 'rotateY(180deg)'
+            })
+          }
+
+          this.renderCardZIndex(card)
+        }
+
+        renderCardZIndex(card) {
+          $("#card" + card.id).css({
+            zIndex: card.zIndex
+          })
+        }
+
+        isCardVisible(playerId, cardRect) {
+          const VISIBLE = true
+          const INVISIBLE = false
+          // return VISIBLE // make every card visible
+          if (this.boardCenter.contains(cardRect)) {
+            return VISIBLE
+          } else if (playerId === NO_PLAYER_ID) {
+            return INVISIBLE
+          } else if (this.playerZone(playerId).containsRect(cardRect)) {
+            return VISIBLE
+          } else {
+            return INVISIBLE
+          }
+        }
+        
+        cardSize() {
+          return {
+            width: $('.card').width() + 5,
+            height: $('.card').height() + 10
+          }
+        }
+
+        playerZone(playerId) {
+          const $playerZone = $('#player-zone' + playerId)
+          const zone = $playerZone.position()
+          zone.right = zone.left + $playerZone.width()
+          zone.bottom = zone.top + $playerZone.height()
+          return new Rect(zone)
+        }
+
+        isCardInDealerStack(card) {
+          return this.dealerZone.contains(card)
+        }
+      }
+
+      class CollectionRepository {
+        constructor(db, collectionRef, onItemChange) {
+          this.db = db;
+          this.collectionRef = collectionRef;
+          this.items = this.buildItems();
+          this.items.forEach((item, idx) => {
+            this.itemRef(item.id).on('value', (snapshot) => {
+              // overwrite only when exists
+              if (snapshot.exists()) {
+                this.items[idx] = snapshot.val()
+              }
+              onItemChange(item.id)
+            })
+          })
+          this.initializeIfNotInitialized();
+        }
+
+        initializeIfNotInitialized() {
+          this.items.forEach((item) => {
+            this.itemRef(item.id).once('value').then(snapshot => {
+              if (!snapshot.exists()) {
+                this.updateItem(item)
+              }
+            })
+          })
+        }
+
+        buildItems() {
+          throw new Error('Implementation missing: abstract buildItems()')
+        }
+
+        reinitialize() {
+          this.items = this.buildItems()
+          return this.updateItems(this.items)
+        }
+
+        item(itemId) {
+          return this.items.find(item => item.id === itemId)
+        }
+
+        updateItems(items) {
+          return Promise.all(items.map((item) => {
+            return this.updateItem(item)
+          }))
+        }
+
+        updateItem(item) {
+          return this.itemRef(item.id).set(item).then(() => {
+            return item
+          })
+        }
+
+        itemRef(itemId) {
+          return this.db.ref(`${this.collectionRef}/${itemId}`);
+        }
+      }
+
+      // usefule to decide between local and remote updates
+      // e.g. to avoid double-rendering local updates
+      class LocalItemMovingState {
+        movingItem(itemId) { this.movingItemId = itemId }
+        noMovingItem() { this.movingItemId = undefined }
+        isMoving(itemId) { return this.movingItemId === itemId }
+      }
+
+      const stack = new CardStack()
+      class GameCards extends CollectionRepository {
+        buildItems() {
+          return stack.shuffle({
+            top: 5,
+            left: 420,
+            isMoving: false
+          })
+        }
+
+        moveCard(cardId, newPosition, bringToFront, isMoving=false) {
+          const card = this.item(cardId)
+          // avoid unnecessary writes if nothing changed
+          if (!bringToFront && card.top === newPosition.top && card.left === newPosition.left) {
+            return Promise.resolve()
+          }
+          return this.updateItem({
+            ...card,
+            ...newPosition,
+            zIndex: bringToFront ? (this.maxZIndex() + 1) : card.zIndex,
+            isMoving: isMoving || false
+          })
+        }
+
+        maxZIndex() {
+          return Math.max.apply(null, this.items.map(c => c.zIndex))
+        }
+
+        async dealCards(gameDesk) {
+          const cards = this.items;
+          const cardsInDealerStack = cards.filter(card => gameDesk.isCardInDealerStack(card))
+          const numberOfCardsInDealerStack = cardsInDealerStack.length
+          const MIN_NUMBER_OF_CARDS_TO_DEAL = 20; // 5 per player
+          const MAX_NUMBER_OF_CARDS_TO_DEAL = 24; // 6 per player
+
+          // nothing to deal
+          let numberOfCardsToDealNow;
+          if (numberOfCardsInDealerStack === MAX_NUMBER_OF_CARDS_TO_DEAL) {
+            numberOfCardsToDealNow = MAX_NUMBER_OF_CARDS_TO_DEAL;
+          } else if (numberOfCardsInDealerStack > MAX_NUMBER_OF_CARDS_TO_DEAL) {
+            numberOfCardsToDealNow = MIN_NUMBER_OF_CARDS_TO_DEAL;
+          } else {
+            numberOfCardsToDealNow = 0
+          }
+
+          const cardsDealt = []
+
+          // nothing to deal
+          if (numberOfCardsToDealNow === 0) {
+            return cardsDealt
+          }
+
+          for (let i = 0; i < numberOfCardsToDealNow; i++) {
+            const card = cardsInDealerStack[i]
+            const playerId = cardsDealt.length % 4;
+            const playerCardIdx = Math.floor(cardsDealt.length / 4);
+
+            // fill the player zone
+            card.top = 10 + gameDesk.playerZone(playerId).top + gameDesk.cardSize().height * Math.floor(playerCardIdx / 2)
+            card.left = 5 + gameDesk.playerZone(playerId).left + gameDesk.cardSize().width * (playerCardIdx % 2)
+
+            cardsDealt.push(card)
+          }
+          return this.updateItems(cardsDealt)
+        }
+      }
+
+      class GamePlayers extends CollectionRepository {
+        constructor(db, collectionRef, currentPlayer, onItemChange) {
+          super(db, collectionRef, (itemId) => {
+            const changeset = {
+              itemId,
+              wasCurrentPlayer: false
+            }
+            
+            // is the current player still this, or did someone else kick him out?
+            // if still valid -> noop
+            // if kicked out -> set NO player
+            if (itemId === this.currentPlayerId &&
+                this.item(itemId).activeLock !== this.currentPlayerActiveLock) {
+              changeset.wasCurrentPlayer = true
+              this.setNoCurrentPlayer()
+            }
+
+            onItemChange(changeset)
+          })
+          this.setCurrentPlayer(currentPlayer.id, currentPlayer.activeLock)
+        }
+
+        buildItems() {
+          return [
+            {activeLock: NO_PLAYER_ACTIVE_LOCK, top: 40, left: 0},
+            {activeLock: NO_PLAYER_ACTIVE_LOCK, top: 40, left: 30},
+            {activeLock: NO_PLAYER_ACTIVE_LOCK, top: 40, left: 60},
+            {activeLock: NO_PLAYER_ACTIVE_LOCK, top: 40, left: 90}
+          ].map((item, idx) => {
+            item.id = idx
+            return item
+          })
+        }
+
+        setNoCurrentPlayer() {
+          this.setCurrentPlayer(NO_PLAYER_ID, NO_PLAYER_ACTIVE_LOCK)
+        }
+
+        setCurrentPlayer(playerId, activeLock) {
+          this.currentPlayerId = playerId
+          this.currentPlayerActiveLock = activeLock
+        }
+
+        updatePlayerActiveId(newCurrentPlayerId) {
+          // noop if the player is already current
+          if (this.currentPlayerId === newCurrentPlayerId) {
+            return Promise.resolve()
+          }
+
+          // player is already chosen by someone else => ask to force
+          if (this.isPlayerActive(this.item(newCurrentPlayerId))) {
+            if (!confirm('Player ' + newCurrentPlayerId + ' already joined. Kick out and take the seat?')) {
+              return Promise.resolve()
+            }
+          }
+
+          const changes = []
+
+          // set old inactive
+          if (this.currentPlayerId !== NO_PLAYER_ID) {
+            const oldCurrentPlayer = this.item(this.currentPlayerId)
+            oldCurrentPlayer.activeLock = NO_PLAYER_ACTIVE_LOCK
+            changes.push({id: this.currentPlayerId, ...oldCurrentPlayer})
+          }
+
+          // set new active
+          if (newCurrentPlayerId !== NO_PLAYER_ID) {
+            const newCurrentPlayer = this.item(newCurrentPlayerId)
+            newCurrentPlayer.activeLock = Math.random().toString().replace('.', '')
+            this.setCurrentPlayer(newCurrentPlayerId, newCurrentPlayer.activeLock)
+            changes.push({id: newCurrentPlayerId, ...newCurrentPlayer});
+          }
+
+          return this.updateItems(changes)
+        }
+
+        isPlayerActive(player) {
+          return player.activeLock !== NO_PLAYER_ACTIVE_LOCK
+        }
+
+        moveCurrentPlayerCursor(position) {
+          if (this.currentPlayerId === NO_PLAYER_ID) {
+            return // noop
+          }
+          this.updateItem({
+            id: this.currentPlayerId,
+            activeLock: this.currentPlayerActiveLock,
+            top: position.top,
+            left: position.left
+          })
+        }
+      }
+
+      class GameMarbles extends CollectionRepository {
+        buildMarblesAroundCenter(top, left, playerId) {
+          return [
+            {top: top-10, left: left-10, playerId},
+            {top: top-10, left: left+10, playerId},
+            {top: top+10, left: left-10, playerId},
+            {top: top+10, left: left+10, playerId},
+          ]
+        }
+
+        buildItems() {
+          return [].concat(
+            this.buildMarblesAroundCenter(77, 237, 0), // topleft
+            this.buildMarblesAroundCenter(242, 515, 1), // topright
+            this.buildMarblesAroundCenter(354, 81, 2), // bottomleft
+            this.buildMarblesAroundCenter(515, 353, 3), // bottomright
+          ).map((item, idx) => {
+            item.id = idx
+            return item
+          })
+        }
+
+        moveMarble(id, newPosition) {
+          this.updateItem({
+            ...this.item(id),
+            ...newPosition
+          })
+        }
+      }
+
+      class GameUrl {
+        constructor() {
+          this.update(this.gameId(), this.player())
+        }
+        get(attrName, defaultValue) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const value = urlParams.get(attrName) || defaultValue;
+          return value;
+        }
+        gameId() {
+          return this.get('gameId', 'main');
+        }
+        player() {
+          return {
+            id: parseInt(this.get('playerId', NO_PLAYER_ID)),
+            activeLock: this.get('playerActiveLock', NO_PLAYER_ACTIVE_LOCK)
+          }
+        }
+        setPlayer(player) {
+          this.update(this.gameId(), player)
+        }
+        update(gameId, player) {
+          const searchUrl = this.buildUrl(gameId, player);
+          window.history.replaceState(undefined, undefined, searchUrl)
+        }
+        buildUrl(gameId, player) {
+          return `?gameId=${gameId}&playerId=${player.id}&playerActiveLock=${player.activeLock}`
+        }
+      }
+
+      function initGameAndUI() {
+        const gameDesk = new GameDesk();
+        const gameUrl = new GameUrl()
+
+        const app = firebase.app();
+        const firestore = firebase.firestore();
+        const db = firebase.database();
+
+        const gamePlayers = new GamePlayers(
+          db, `games/${gameUrl.gameId()}/players`,
+          gameUrl.player(),
+          ({itemId, wasCurrentPlayer}) => {
+            gameDesk.renderPlayer(gamePlayers.item(itemId), gamePlayers.currentPlayerId)
+            
+            // possibly the current player was kicked out by someone else
+            if (wasCurrentPlayer) {
+              // update visibility status if kicked
+              gameDesk.renderCards(gameCards.items, gamePlayers.currentPlayerId)
+              
+              // update url if kicked
+              gameUrl.setPlayer({
+                id: gamePlayers.currentPlayerId,
+                activeLock: gamePlayers.currentPlayerActiveLock
+              })
+            }          
+          }
+        )
+        const localCardMovingState = new LocalItemMovingState()
+        const gameCards = new GameCards(
+          db, `games/${gameUrl.gameId()}/cards`,
+          (itemId) => {
+            if (!localCardMovingState.isMoving(itemId)) {
+              gameDesk.renderCard(gameCards.item(itemId), gamePlayers.currentPlayerId, true)
+            }
+          }
+        )
+
+        const localMarbleMovingState = new LocalItemMovingState()
+        const gameMarbles = new GameMarbles(
+          db, `games/${gameUrl.gameId()}/marbles`,
+          (itemId) => {
+            if (!localMarbleMovingState.isMoving(itemId)) {
+              gameDesk.renderMarble(gameMarbles.item(itemId), true)
+            }
+          }
+        )
+
+        // render initial html templates
+        $('marbles').html(renderListTemplate($('marble-template').html(), gameMarbles.items, ['playerId']));
+        $('cards').html(renderListTemplate($('card-template').html(), gameCards.buildItems()));
+        
+        $(".card").draggable({
+          start: function( event, ui ) {
+            const domId = event.target.id
+            const cardId = parseInt(domId.split('card')[1])
+            localCardMovingState.movingItem(cardId)
+            gameCards.moveCard(cardId, ui.position, true, true)
+            gameDesk.renderCardZIndex(gameCards.item(cardId))
+          },
+          drag: throttle(function( event, ui ) {
+            const domId = event.target.id
+            const cardId = parseInt(domId.split('card')[1])
+            // do not bring card to front while dragging => bringToFront=false
+            gameCards.moveCard(cardId, ui.position, false, true)
+          }, 300, {leading: false}),
+          stop: function( event, ui ) {
+            const domId = event.target.id
+            const cardId = parseInt(domId.split('card')[1])
+            localCardMovingState.noMovingItem()
+            gameCards.moveCard(cardId, ui.position, true, false)
+          }
+        });
+
+        $(".marble").draggable({
+          start: function( event, ui ) {
+            const domId = event.target.id
+            const marbleId = parseInt(domId.split('marble')[1])
+            localMarbleMovingState.movingItem(marbleId)
+            gameMarbles.moveMarble(marbleId, ui.position)
+          },
+          drag: throttle(function( event, ui ) {
+            const domId = event.target.id
+            const marbleId = parseInt(domId.split('marble')[1])
+            gameMarbles.moveMarble(marbleId, ui.position)
+          }, 300, {leading: false}),
+          stop: function( event, ui ) {
+            const domId = event.target.id
+            const marbleId = parseInt(domId.split('marble')[1])
+            localMarbleMovingState.noMovingItem()
+            gameMarbles.moveMarble(marbleId, ui.position)
+          }
+        });
+
+        function normalizedCursorPosition(gameSelector, mouseEvent) {
+          var offset = $(gameSelector).offset(); 
+          var relX = mouseEvent.pageX - offset.left;
+          var relY = mouseEvent.pageY - offset.top;
+          return {
+            left: relX,
+            top: relY
+          }
+        }
+        $('#game')
+        .on('mousemove', function(event) {
+          $('#player-cursor' + gamePlayers.currentPlayerId).css(normalizedCursorPosition(this, event));
+        })
+        .on('mousemove', throttle(function(event) {
+          gamePlayers.moveCurrentPlayerCursor(normalizedCursorPosition(this, event))
+        }, 300, {leading: false}))
+        $('#new-game').click(function(){
+          if (confirm('Start a new Game?')) {
+            gameMarbles.reinitialize()
+            gameCards.reinitialize()
+            gamePlayers.reinitialize()
+          }
+        })
+        $('#help').click(function(){
+          $(this).toggleClass('active')
+          $('#desk').toggle();
+          $('#modal-help').toggle();
+        })
+        $('#game-shuffle-cards').click(function(){
+          gameCards.reinitialize()
+        })
+        $('#game-deal-cards').click(function(){
+          gameCards.dealCards(gameDesk)
+        })
+        $('.choose-player').click(function(){
+          const playerId = parseInt($(this).attr('id').split('player')[1])
+          gamePlayers.updatePlayerActiveId(playerId).then(() => {
+            gameDesk.renderCards(gameCards.items, gamePlayers.currentPlayerId)
+            gameUrl.setPlayer({id: gamePlayers.currentPlayerId, activeLock: gamePlayers.currentPlayerActiveLock})
+          })
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        try {
+          let initializedGameAndUI = false
+          firebase.auth().onAuthStateChanged(function(user) {
+            if (initializedGameAndUI && user) {
+              window.location.reload(); // destroy game and UI
+            } else if (user) {
+              initGameAndUI()
+              initializedGameAndUI = true
+            } else {
+              const password = prompt('Password')
+              firebase
+              .auth()
+              .signInWithEmailAndPassword('demo@example.com', typeof password === 'string' ? password : '')
+              .catch(function(error) {
+                // Handle Errors here.
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                console.error(error);
+                document.getElementsByTagName('body')[0].innerHTML = 'Wrong Password.';
+              });
+            }
+          });
+        } catch (e) {
+          console.error(e);
+          document.getElementsByTagName('body')[0].innerHTML = 'Error loading the Game.';
+        }
+      });
+    </script>
+  </body>
+</html>

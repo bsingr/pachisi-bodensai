@@ -1,0 +1,6 @@
+{
+  "rules": {
+    ".read": "auth.uid.length > 0",
+    ".write": "auth.uid.length > 0"
+  }
+}
