@@ -56,3 +56,32 @@ class CardStack {
   }
 }
 
+class GameUrl {
+  constructor() {
+    this.update(this.gameId(), this.player())
+  }
+  get(attrName, defaultValue) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const value = urlParams.get(attrName) || defaultValue;
+    return value;
+  }
+  gameId() {
+    return this.get('gameId', 'main');
+  }
+  player() {
+    return {
+      id: parseInt(this.get('playerId', NO_PLAYER_ID)),
+      activeLock: this.get('playerActiveLock', NO_PLAYER_ACTIVE_LOCK)
+    }
+  }
+  setPlayer(player) {
+    this.update(this.gameId(), player)
+  }
+  update(gameId, player) {
+    const searchUrl = this.buildUrl(gameId, player);
+    window.history.replaceState(undefined, undefined, searchUrl)
+  }
+  buildUrl(gameId, player) {
+    return `?gameId=${gameId}&playerId=${player.id}&playerActiveLock=${player.activeLock}`
+  }
+}
