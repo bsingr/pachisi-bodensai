@@ -363,12 +363,6 @@
           })
         }
 
-        renderMarbles(marbles) {
-          marbles.forEach((marble) => {
-            this.renderMarble(marble, true)
-          })
-        }
-
         renderMarble(marble, animate=false) {
           $("#marble" + marble.id)
             .animate({
