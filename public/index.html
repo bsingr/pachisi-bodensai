@@ -363,21 +363,20 @@
           })
         }
 
-        renderMarble(marble, animate=false) {
-          $("#marble" + marble.id)
-            .animate({
-              top: marble.top + 'px',
-              left: marble.left + 'px'
-            }, animate ? 400 : 0)
+        renderMarble(marble) {
+          $("#marble" + marble.id).animate({
+            top: marble.top + 'px',
+            left: marble.left + 'px'
+          }, 400)
         }
 
         renderCards(cards, currentPlayerId) {
           cards.forEach((card) => {
-            this.renderCard(card, currentPlayerId, true)
+            this.renderCard(card, currentPlayerId)
           })
         }
 
-        renderCard(card, currentPlayerId, animate=false) {
+        renderCard(card, currentPlayerId) {
           const cardId = card.id;
           const $card = $("#card" + cardId);
           let oldTypeClass = ''
@@ -391,7 +390,7 @@
             .animate({
               top: card.top + 'px',
               left: card.left + 'px'
-            }, animate ? 400 : 0)
+            }, 400)
           
           // only change visibility for cards that stopped moving
           // to avoid accidentially showing a card while moving over board center
@@ -733,7 +732,7 @@
           db, `games/${gameUrl.gameId()}/cards`,
           (itemId) => {
             if (!localCardMovingState.isMoving(itemId)) {
-              gameDesk.renderCard(gameCards.item(itemId), gamePlayers.currentPlayerId, true)
+              gameDesk.renderCard(gameCards.item(itemId), gamePlayers.currentPlayerId)
             }
           }
         )
@@ -743,7 +742,7 @@
           db, `games/${gameUrl.gameId()}/marbles`,
           (itemId) => {
             if (!localMarbleMovingState.isMoving(itemId)) {
-              gameDesk.renderMarble(gameMarbles.item(itemId), true)
+              gameDesk.renderMarble(gameMarbles.item(itemId))
             }
           }
         )
