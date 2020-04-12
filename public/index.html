@@ -466,14 +466,13 @@
           this.initializeIfNotInitialized();
         }
 
-        initializeIfNotInitialized() {
-          this.items.forEach((item) => {
-            this.itemRef(item.id).once('value').then(snapshot => {
-              if (!snapshot.exists()) {
-                this.updateItem(item)
-              }
-            })
-          })
+        async initializeIfNotInitialized() {
+          for (const item of this.items) {
+            const snapshot = await this.itemRef(item.id).once('value')
+            if (!snapshot.exists()) {
+              this.updateItem(item)
+            }
+          }
         }
 
         buildItems() {
@@ -495,10 +494,9 @@
           }))
         }
 
-        updateItem(item) {
-          return this.itemRef(item.id).set(item).then(() => {
-            return item
-          })
+        async updateItem(item) {
+          await this.itemRef(item.id).set(item)
+          return item;
         }
 
         itemRef(itemId) {
