@@ -596,7 +596,7 @@
             if (itemId === this.currentPlayerId &&
                 this.item(itemId).activeLock !== this.currentPlayerActiveLock) {
               changeset.wasCurrentPlayer = true
-              this.setNoCurrentPlayer()
+              this.setCurrentPlayer(NO_PLAYER_ID, NO_PLAYER_ACTIVE_LOCK)
             }
 
             onItemChange(changeset)
@@ -616,10 +616,6 @@
           })
         }
 
-        setNoCurrentPlayer() {
-          this.setCurrentPlayer(NO_PLAYER_ID, NO_PLAYER_ACTIVE_LOCK)
-        }
-
         setCurrentPlayer(playerId, activeLock) {
           this.currentPlayerId = playerId
           this.currentPlayerActiveLock = activeLock
@@ -627,34 +623,20 @@
 
         updatePlayerActiveId(newCurrentPlayerId) {
           // noop if the player is already current
-          if (this.currentPlayerId === newCurrentPlayerId) {
-            return Promise.resolve()
-          }
-
-          // player is already chosen by someone else => ask to force
-          if (this.isPlayerActive(this.item(newCurrentPlayerId))) {
-            if (!confirm('Player ' + newCurrentPlayerId + ' already joined. Kick out and take the seat?')) {
-              return Promise.resolve()
-            }
-          }
+          if (this.currentPlayerId === newCurrentPlayerId) return Promise.resolve()
 
           const changes = []
-
-          // set old inactive
-          if (this.currentPlayerId !== NO_PLAYER_ID) {
+          if (this.currentPlayerId !== NO_PLAYER_ID) { // set old inactive
             const oldCurrentPlayer = this.item(this.currentPlayerId)
             oldCurrentPlayer.activeLock = NO_PLAYER_ACTIVE_LOCK
             changes.push({id: this.currentPlayerId, ...oldCurrentPlayer})
           }
-
-          // set new active
-          if (newCurrentPlayerId !== NO_PLAYER_ID) {
+          if (newCurrentPlayerId !== NO_PLAYER_ID) { // set new active
             const newCurrentPlayer = this.item(newCurrentPlayerId)
             newCurrentPlayer.activeLock = Math.random().toString().replace('.', '')
             this.setCurrentPlayer(newCurrentPlayerId, newCurrentPlayer.activeLock)
             changes.push({id: newCurrentPlayerId, ...newCurrentPlayer});
           }
-
           return this.updateItems(changes)
         }
 
@@ -815,7 +797,13 @@
           gameCards.dealCards(gameDeskDimensions)
         })
         $('.choose-player').click(function(){
-          gamePlayers.updatePlayerActiveId(itemIdFromDomId('player', this.id)).then(() => {
+          const newCurrentPlayerId = itemIdFromDomId('player', this.id);
+          // player is already chosen by someone else => ask to force
+          if (gamePlayers.isPlayerActive(gamePlayers.item(newCurrentPlayerId))
+            && !confirm('Player ' + newCurrentPlayerId + ' already joined. Kick out and take the seat?')) {
+            return
+          }
+          gamePlayers.updatePlayerActiveId(newCurrentPlayerId).then(() => {
             gameDesk.renderCards(gameCards.items, gamePlayers.currentPlayerId)
             gameUrl.setPlayer({id: gamePlayers.currentPlayerId, activeLock: gamePlayers.currentPlayerActiveLock})
           })
