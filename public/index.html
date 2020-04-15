@@ -748,43 +748,37 @@
         $('marbles').html(renderListTemplate($('marble-template').html(), gameMarbles.items, ['playerId']));
         $('cards').html(renderListTemplate($('card-template').html(), gameCards.buildItems()));
         
+        function itemIdFromDomId(domIdPrefix, domId) { return parseInt(domId.split(domIdPrefix)[1]) }
         $(".card").draggable({
           start: function( event, ui ) {
-            const domId = event.target.id
-            const cardId = parseInt(domId.split('card')[1])
+            const cardId = itemIdFromDomId('card', event.target.id)
             gameDesk.localCardMovingState.movingItem(cardId)
             gameCards.moveCard(cardId, ui.position, true, true)
             gameDesk.renderCardZIndex(gameCards.item(cardId))
           },
           drag: throttle(function( event, ui ) {
-            const domId = event.target.id
-            const cardId = parseInt(domId.split('card')[1])
+            const cardId = itemIdFromDomId('card', event.target.id)
             // do not bring card to front while dragging => bringToFront=false
             gameCards.moveCard(cardId, ui.position, false, true)
           }, 300, {leading: false}),
           stop: function( event, ui ) {
-            const domId = event.target.id
-            const cardId = parseInt(domId.split('card')[1])
+            const cardId = itemIdFromDomId('card', event.target.id)
             gameDesk.localCardMovingState.noMovingItem()
             gameCards.moveCard(cardId, ui.position, true, false)
           }
         });
-
         $(".marble").draggable({
           start: function( event, ui ) {
-            const domId = event.target.id
-            const marbleId = parseInt(domId.split('marble')[1])
+            const marbleId = itemIdFromDomId('marble', event.target.id)
             gameDesk.localMarbleMovingState.movingItem(marbleId)
             gameMarbles.moveMarble(marbleId, ui.position)
           },
           drag: throttle(function( event, ui ) {
-            const domId = event.target.id
-            const marbleId = parseInt(domId.split('marble')[1])
+            const marbleId = itemIdFromDomId('marble', event.target.id)
             gameMarbles.moveMarble(marbleId, ui.position)
           }, 300, {leading: false}),
           stop: function( event, ui ) {
-            const domId = event.target.id
-            const marbleId = parseInt(domId.split('marble')[1])
+            const marbleId = itemIdFromDomId('marble', event.target.id)
             gameDesk.localMarbleMovingState.noMovingItem()
             gameMarbles.moveMarble(marbleId, ui.position)
           }
@@ -825,8 +819,7 @@
           gameCards.dealCards(gameDeskDimensions)
         })
         $('.choose-player').click(function(){
-          const playerId = parseInt($(this).attr('id').split('player')[1])
-          gamePlayers.updatePlayerActiveId(playerId).then(() => {
+          gamePlayers.updatePlayerActiveId(itemIdFromDomId('player', this.id)).then(() => {
             gameDesk.renderCards(gameCards.items, gamePlayers.currentPlayerId)
             gameUrl.setPlayer({id: gamePlayers.currentPlayerId, activeLock: gamePlayers.currentPlayerActiveLock})
           })
