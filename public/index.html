@@ -321,9 +321,8 @@
       const NO_PLAYER_ID = -1;
       const NO_PLAYER_ACTIVE_LOCK = -1;
 
-      class GameDesk {
+      class GameDeskDimensions {
         constructor() {
-          $('#game').fadeIn()
           this.boardCenter = new Rect({
             left: 383,
             right: 463,
@@ -336,6 +335,49 @@
           dealerZone.right = dealerZone.left + $('#dealer-zone').width()
           dealerZone.bottom = dealerZone.top + $('#dealer-zone').height()
           this.dealerZone = new Rect(dealerZone)
+          this.cardSize = {
+            width: $('.card').width() + 5,
+            height: $('.card').height() + 10
+          }
+          this.playerZones = [0,1,2,3].map(playerId => {
+            const $playerZone = $('#player-zone' + playerId)
+            const zone = $playerZone.position()
+            zone.right = zone.left + $playerZone.width()
+            zone.bottom = zone.top + $playerZone.height()
+            return new Rect(zone)
+          })
+        }
+
+        isCardVisible(playerId, cardRect) {
+          const VISIBLE = true
+          const INVISIBLE = false
+          // return VISIBLE // make every card visible
+          if (this.boardCenter.contains(cardRect)) {
+            return VISIBLE
+          } else if (playerId === NO_PLAYER_ID) {
+            return INVISIBLE
+          } else if (this.playerZones[playerId].containsRect(cardRect)) {
+            return VISIBLE
+          } else {
+            return INVISIBLE
+          }
+        }
+
+        cardsInDealerStack(cards) {
+          return cards.filter(card => this.dealerZone.contains(card))
+        }
+
+        playerZoneCardPosition(playerId, playerZoneCardIdx) {
+          return {
+            top: 10 + this.playerZones[playerId].top + this.cardSize.height * Math.floor(playerZoneCardIdx / 2),
+            left: 5 + this.playerZones[playerId].left + this.cardSize.width * (playerZoneCardIdx % 2)
+          }
+        }
+      }
+
+      class GameDesk {
+        constructor(gameDeskDimensions) {
+          this.gameDeskDimensions = gameDeskDimensions
         }
 
         renderPlayer(player, currentPlayerId) {
@@ -396,7 +438,7 @@
           // to avoid accidentially showing a card while moving over board center
           if (!card.isMoving) {
             $card.find('.card-box').css({
-              transform: this.isCardVisible(currentPlayerId, {
+              transform: this.gameDeskDimensions.isCardVisible(currentPlayerId, {
                 ...card,
                 right: card.left + $card.width(),
                 bottom: card.top + $card.height(),
@@ -411,40 +453,6 @@
           $("#card" + card.id).css({
             zIndex: card.zIndex
           })
-        }
-
-        isCardVisible(playerId, cardRect) {
-          const VISIBLE = true
-          const INVISIBLE = false
-          // return VISIBLE // make every card visible
-          if (this.boardCenter.contains(cardRect)) {
-            return VISIBLE
-          } else if (playerId === NO_PLAYER_ID) {
-            return INVISIBLE
-          } else if (this.playerZone(playerId).containsRect(cardRect)) {
-            return VISIBLE
-          } else {
-            return INVISIBLE
-          }
-        }
-        
-        cardSize() {
-          return {
-            width: $('.card').width() + 5,
-            height: $('.card').height() + 10
-          }
-        }
-
-        playerZone(playerId) {
-          const $playerZone = $('#player-zone' + playerId)
-          const zone = $playerZone.position()
-          zone.right = zone.left + $playerZone.width()
-          zone.bottom = zone.top + $playerZone.height()
-          return new Rect(zone)
-        }
-
-        isCardInDealerStack(card) {
-          return this.dealerZone.contains(card)
         }
       }
 
@@ -539,9 +547,9 @@
           return Math.max.apply(null, this.items.map(c => c.zIndex))
         }
 
-        async dealCards(gameDesk) {
+        dealCards(gameDeskDimensions) {
           const cards = this.items;
-          const cardsInDealerStack = cards.filter(card => gameDesk.isCardInDealerStack(card))
+          const cardsInDealerStack = gameDeskDimensions.cardsInDealerStack(cards)
           const numberOfCardsInDealerStack = cardsInDealerStack.length
           const MIN_NUMBER_OF_CARDS_TO_DEAL = 20; // 5 per player
           const MAX_NUMBER_OF_CARDS_TO_DEAL = 24; // 6 per player
@@ -566,12 +574,8 @@
           for (let i = 0; i < numberOfCardsToDealNow; i++) {
             const card = cardsInDealerStack[i]
             const playerId = cardsDealt.length % 4;
-            const playerCardIdx = Math.floor(cardsDealt.length / 4);
-
-            // fill the player zone
-            card.top = 10 + gameDesk.playerZone(playerId).top + gameDesk.cardSize().height * Math.floor(playerCardIdx / 2)
-            card.left = 5 + gameDesk.playerZone(playerId).left + gameDesk.cardSize().width * (playerCardIdx % 2)
-
+            const playerZoneCardIdx = Math.floor(cardsDealt.length / 4);
+            Object.assign(card, gameDeskDimensions.playerZoneCardPosition(playerId, playerZoneCardIdx))
             cardsDealt.push(card)
           }
           return this.updateItems(cardsDealt)
@@ -702,7 +706,9 @@
       }
 
       function initGameAndUI() {
-        const gameDesk = new GameDesk();
+        $('#game').fadeIn()
+        const gameDeskDimensions = new GameDeskDimensions();
+        const gameDesk = new GameDesk(gameDeskDimensions);
         const gameUrl = new GameUrl()
 
         const app = firebase.app();
@@ -825,7 +831,7 @@
           gameCards.reinitialize()
         })
         $('#game-deal-cards').click(function(){
-          gameCards.dealCards(gameDesk)
+          gameCards.dealCards(gameDeskDimensions)
         })
         $('.choose-player').click(function(){
           const playerId = parseInt($(this).attr('id').split('player')[1])
