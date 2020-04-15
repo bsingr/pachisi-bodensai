@@ -375,9 +375,19 @@
         }
       }
 
+      // usefule to decide between local and remote updates
+      // e.g. to avoid double-rendering local updates
+      class LocalItemMovingState {
+        movingItem(itemId) { this.movingItemId = itemId }
+        noMovingItem() { this.movingItemId = undefined }
+        isMoving(itemId) { return this.movingItemId === itemId }
+      }
+
       class GameDesk {
         constructor(gameDeskDimensions) {
           this.gameDeskDimensions = gameDeskDimensions
+          this.localCardMovingState = new LocalItemMovingState()
+          this.localMarbleMovingState = new LocalItemMovingState()
         }
 
         renderPlayer(player, currentPlayerId) {
@@ -406,6 +416,7 @@
         }
 
         renderMarble(marble) {
+          if (this.localMarbleMovingState.isMoving(marble.id)) return; // don't render while moving locally
           $("#marble" + marble.id).animate({
             top: marble.top + 'px',
             left: marble.left + 'px'
@@ -419,6 +430,7 @@
         }
 
         renderCard(card, currentPlayerId) {
+          if (this.localCardMovingState.isMoving(card.id)) return; // don't render while moving locally
           const cardId = card.id;
           const $card = $("#card" + cardId);
           let oldTypeClass = ''
@@ -509,14 +521,6 @@
         itemRef(itemId) {
           return this.db.ref(`${this.collectionRef}/${itemId}`);
         }
-      }
-
-      // usefule to decide between local and remote updates
-      // e.g. to avoid double-rendering local updates
-      class LocalItemMovingState {
-        movingItem(itemId) { this.movingItemId = itemId }
-        noMovingItem() { this.movingItemId = undefined }
-        isMoving(itemId) { return this.movingItemId === itemId }
       }
 
       const stack = new CardStack()
@@ -733,24 +737,11 @@
             }          
           }
         )
-        const localCardMovingState = new LocalItemMovingState()
-        const gameCards = new GameCards(
-          db, `games/${gameUrl.gameId()}/cards`,
-          (itemId) => {
-            if (!localCardMovingState.isMoving(itemId)) {
-              gameDesk.renderCard(gameCards.item(itemId), gamePlayers.currentPlayerId)
-            }
-          }
+        const gameCards = new GameCards(db, `games/${gameUrl.gameId()}/cards`,
+          (itemId) => gameDesk.renderCard(gameCards.item(itemId), gamePlayers.currentPlayerId)
         )
-
-        const localMarbleMovingState = new LocalItemMovingState()
-        const gameMarbles = new GameMarbles(
-          db, `games/${gameUrl.gameId()}/marbles`,
-          (itemId) => {
-            if (!localMarbleMovingState.isMoving(itemId)) {
-              gameDesk.renderMarble(gameMarbles.item(itemId))
-            }
-          }
+        const gameMarbles = new GameMarbles(db, `games/${gameUrl.gameId()}/marbles`,
+          (itemId) => gameDesk.renderMarble(gameMarbles.item(itemId))
         )
 
         // render initial html templates
@@ -761,7 +752,7 @@
           start: function( event, ui ) {
             const domId = event.target.id
             const cardId = parseInt(domId.split('card')[1])
-            localCardMovingState.movingItem(cardId)
+            gameDesk.localCardMovingState.movingItem(cardId)
             gameCards.moveCard(cardId, ui.position, true, true)
             gameDesk.renderCardZIndex(gameCards.item(cardId))
           },
@@ -774,7 +765,7 @@
           stop: function( event, ui ) {
             const domId = event.target.id
             const cardId = parseInt(domId.split('card')[1])
-            localCardMovingState.noMovingItem()
+            gameDesk.localCardMovingState.noMovingItem()
             gameCards.moveCard(cardId, ui.position, true, false)
           }
         });
@@ -783,7 +774,7 @@
           start: function( event, ui ) {
             const domId = event.target.id
             const marbleId = parseInt(domId.split('marble')[1])
-            localMarbleMovingState.movingItem(marbleId)
+            gameDesk.localMarbleMovingState.movingItem(marbleId)
             gameMarbles.moveMarble(marbleId, ui.position)
           },
           drag: throttle(function( event, ui ) {
@@ -794,7 +785,7 @@
           stop: function( event, ui ) {
             const domId = event.target.id
             const marbleId = parseInt(domId.split('marble')[1])
-            localMarbleMovingState.noMovingItem()
+            gameDesk.localMarbleMovingState.noMovingItem()
             gameMarbles.moveMarble(marbleId, ui.position)
           }
         });
