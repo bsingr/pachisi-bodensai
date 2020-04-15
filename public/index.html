@@ -705,15 +705,11 @@
         }
       }
 
-      function initGameAndUI() {
+      function initGameAndUI(db) {
         $('#game').fadeIn()
         const gameDeskDimensions = new GameDeskDimensions();
         const gameDesk = new GameDesk(gameDeskDimensions);
         const gameUrl = new GameUrl()
-
-        const app = firebase.app();
-        const db = firebase.database();
-
         const gamePlayers = new GamePlayers(
           db, `games/${gameUrl.gameId()}/players`,
           gameUrl.player(),
@@ -833,7 +829,7 @@
             if (initializedGameAndUI && user) {
               window.location.reload(); // destroy game and UI
             } else if (user) {
-              initGameAndUI()
+              initGameAndUI(firebase.database())
               initializedGameAndUI = true
             } else {
               const password = prompt('Password')
