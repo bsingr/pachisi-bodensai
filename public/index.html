@@ -386,8 +386,6 @@
       class GameDesk {
         constructor(gameDeskDimensions) {
           this.gameDeskDimensions = gameDeskDimensions
-          this.localCardMovingState = new LocalItemMovingState()
-          this.localMarbleMovingState = new LocalItemMovingState()
         }
 
         renderPlayer(player, currentPlayerId) {
@@ -416,7 +414,6 @@
         }
 
         renderMarble(marble) {
-          if (this.localMarbleMovingState.isMoving(marble.id)) return; // don't render while moving locally
           $("#marble" + marble.id).animate({
             top: marble.top + 'px',
             left: marble.left + 'px'
@@ -430,7 +427,6 @@
         }
 
         renderCard(card, currentPlayerId) {
-          if (this.localCardMovingState.isMoving(card.id)) return; // don't render while moving locally
           const cardId = card.id;
           const $card = $("#card" + cardId);
           let oldTypeClass = ''
@@ -737,12 +733,16 @@
             }          
           }
         )
-        const gameCards = new GameCards(db, `games/${gameUrl.gameId()}/cards`,
-          (itemId) => gameDesk.renderCard(gameCards.item(itemId), gamePlayers.currentPlayerId)
-        )
-        const gameMarbles = new GameMarbles(db, `games/${gameUrl.gameId()}/marbles`,
-          (itemId) => gameDesk.renderMarble(gameMarbles.item(itemId))
-        )
+        const localCardMovingState = new LocalItemMovingState()
+        const gameCards = new GameCards(db, `games/${gameUrl.gameId()}/cards`, (itemId) => {
+          if (localCardMovingState.isMoving(itemId)) return; // don't render while moving locally
+          gameDesk.renderCard(gameCards.item(itemId), gamePlayers.currentPlayerId)
+        })
+        const localMarbleMovingState = new LocalItemMovingState()
+        const gameMarbles = new GameMarbles(db, `games/${gameUrl.gameId()}/marbles`, (itemId) => {
+          if (localMarbleMovingState.isMoving(itemId)) return; // don't render while moving locally
+          gameDesk.renderMarble(gameMarbles.item(itemId))
+        })
 
         // render initial html templates
         $('marbles').html(renderListTemplate($('marble-template').html(), gameMarbles.items, ['playerId']));
@@ -752,7 +752,7 @@
         $(".card").draggable({
           start: function( event, ui ) {
             const cardId = itemIdFromDomId('card', event.target.id)
-            gameDesk.localCardMovingState.movingItem(cardId)
+            localCardMovingState.movingItem(cardId)
             gameCards.moveCard(cardId, ui.position, true, true)
             gameDesk.renderCardZIndex(gameCards.item(cardId))
           },
@@ -763,14 +763,14 @@
           }, 300, {leading: false}),
           stop: function( event, ui ) {
             const cardId = itemIdFromDomId('card', event.target.id)
-            gameDesk.localCardMovingState.noMovingItem()
+            localCardMovingState.noMovingItem()
             gameCards.moveCard(cardId, ui.position, true, false)
           }
         });
         $(".marble").draggable({
           start: function( event, ui ) {
             const marbleId = itemIdFromDomId('marble', event.target.id)
-            gameDesk.localMarbleMovingState.movingItem(marbleId)
+            localMarbleMovingState.movingItem(marbleId)
             gameMarbles.moveMarble(marbleId, ui.position)
           },
           drag: throttle(function( event, ui ) {
@@ -779,7 +779,7 @@
           }, 300, {leading: false}),
           stop: function( event, ui ) {
             const marbleId = itemIdFromDomId('marble', event.target.id)
-            gameDesk.localMarbleMovingState.noMovingItem()
+            localMarbleMovingState.noMovingItem()
             gameMarbles.moveMarble(marbleId, ui.position)
           }
         });
