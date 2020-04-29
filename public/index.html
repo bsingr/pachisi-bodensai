@@ -815,10 +815,10 @@
           if (capture.match('eaggs')) {
             switch (ev.key) {
               case 'c':
-                eastereggCircle(gameCards, gameDeskDimensions.boardCenter, Math.random() * 100 + 100)
+                eastereggCircleCards()
                 break;
               case 'm':
-                eastereggCircle(gameMarbles, {top: 300, left: 300, right: 300, bottom: 300}, Math.random() * 100)
+                eastereggCircleMarbles()
                 break;
               default:
                 break;
@@ -827,6 +827,26 @@
             capture = capture + ev.key
           }
         })
+        let touches = 0
+        setInterval(() => {
+          touches = 0
+        }, 2000)
+        document.addEventListener("touchstart", (ev) => {
+          touches++
+          if (touches > 20) {
+            if (ev.touches.item(0).pageY > 300) {
+              eastereggCircleCards()
+            } else {
+              eastereggCircleMarbles()
+            }
+          }
+        }, true)
+        function eastereggCircleCards() {
+          eastereggCircle(gameCards, gameDeskDimensions.boardCenter, Math.random() * 100 + 100)
+        }
+        function eastereggCircleMarbles() {
+          eastereggCircle(gameMarbles, {top: 300, left: 300, right: 300, bottom: 300}, Math.random() * 100)
+        }
         function eastereggCircle(collectionRepository, center, radius) {
           eastereggsCount++
           const items = collectionRepository.items
