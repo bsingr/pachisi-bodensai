@@ -811,21 +811,14 @@
         });
         let capture = ''
         let eastereggsCount = 0
-        let circleInterval = undefined
         $(document).on('keydown', (ev) => {
           if (capture.match('eaggs')) {
             switch (ev.key) {
               case 'c':
-                eastereggCircle()
+                eastereggCircle(gameCards, gameDeskDimensions.boardCenter, Math.random() * 100 + 100)
                 break;
-              case 's':
-                circleInterval = setInterval(() => eastereggCircle(), 2000)
-                break;
-              case 'x':
-                if (circleInterval) {
-                  clearInterval(circleInterval)
-                  circleInterval = undefined
-                }
+              case 'm':
+                eastereggCircle(gameMarbles, {top: 300, left: 300, right: 300, bottom: 300}, Math.random() * 100)
                 break;
               default:
                 break;
@@ -834,18 +827,17 @@
             capture = capture + ev.key
           }
         })
-        function eastereggCircle() {
+        function eastereggCircle(collectionRepository, center, radius) {
           eastereggsCount++
-          const items = gameCards.items
+          const items = collectionRepository.items
           items.forEach(item => {
-            const radius = 200
             const angle = item.id * 10 * eastereggsCount
-            const centerx = gameDeskDimensions.boardCenter.left + (gameDeskDimensions.boardCenter.right - gameDeskDimensions.boardCenter.left)/2
-            const centery = gameDeskDimensions.boardCenter.top + (gameDeskDimensions.boardCenter.bottom - gameDeskDimensions.boardCenter.top)/2
+            const centerx = center.left + (center.right - center.left)/2
+            const centery = center.top + (center.bottom - center.top)/2
             item.left = centerx + radius * Math.cos(angle * Math.PI / 180);
             item.top = centery + radius * Math.sin(angle * Math.PI / 180);
           })
-          gameCards.updateItems(items)
+          collectionRepository.updateItems(items)
         }
       }
 
