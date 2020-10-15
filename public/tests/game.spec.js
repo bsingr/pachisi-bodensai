@@ -17,6 +17,7 @@ describe('buildCardStackForDealer', () => {
       acc[c.type] = acc[c.type] ? acc[c.type] + 1 : 1
       return acc
     }, {});
+    console.log(numberOfCardsPerType)
     chai.expect(numberOfCardsPerType).to.deep.eql({
       '1': 9,
       '2': 7,
@@ -30,12 +31,12 @@ describe('buildCardStackForDealer', () => {
       '10': 7,
       '12': 7,
       '13': 9,
-      'fool': 1,
-      'juggler': 7,
-      'angel': 1,
-      'tac': 4,
-      'warrior': 1,
-      'devil': 1,
+      'ringaround': 1,
+      'switch': 7,
+      'goodcop': 1,
+      'alternate': 4,
+      'lightningball': 1,
+      'badcop': 1,
     })
   })
 
